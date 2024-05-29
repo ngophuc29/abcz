@@ -40,7 +40,7 @@
   /* display: flex; */
   /* justify-content: space-around; */
   /* height: 300px; */
-  width: 100%;
+  /* width: 100%; */
   margin: 0 auto;
 }
 
@@ -63,8 +63,8 @@
   border: 2px solid #007BFF; /* Thay đổi màu viền theo ý bạn */
 }
 .carousel-container {
-  position: relative;
-  width: 100%;
+  position: relative;  
+  width: 100%;  
 }
 
 .carousel-item {
@@ -112,17 +112,26 @@
 
 .react-multi-carousel-item{
   margin-left: 10px;
+   
+  width: 250px; /* Đặt kích thước cố định cho carousel item */
 }
 .react-multi-carousel-list{
   /* border-radius:10px; */
   border: 1px solid #888;
-  justify-content: space-around;
+  /* justify-content: space-around; */
   height: 250px;
+ 
 }
 
 .carousel-item {
-  border: 2px solid #3177A7;
-  transform: scale(1.05);
+  height: 200px;
+  width: 250px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #fff;
+  text-align: center;
+  transition: transform 0.3s;
 }
 
 .card {

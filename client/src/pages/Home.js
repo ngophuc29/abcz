@@ -30,10 +30,7 @@ class Home extends Component {
             selectedCarouselIndex: 0, // Track the index of the selected item in the carousel
             showCarousel: true, // State to control the visibility of the carousel
             openProject: false, // State to control the visibility of project list
-            selectedDocument: null,
-            selectedItem: null,
-
-
+            selectedItem: null
         };
     }
 
@@ -178,11 +175,11 @@ class Home extends Component {
 
 
     render() {
-
         const { open, doorFinish, collections, selectedCollection, documents, collectionDetails, selectedCarouselIndex, showCarousel, drawerOpen, openProject, selectedItem, selectedDocument } = this.state; // Thêm openProject vào đây
 
         const selectedCollectionName = collections[selectedCarouselIndex];
         const selectedDocumentUrn = selectedDocument?.urn;
+
 
         const responsive = {
             superLargeDesktop: {
@@ -204,88 +201,99 @@ class Home extends Component {
         };
 
         return (
-            <div className='viewer-home' style={{ display: 'flex' }}>
+            <div className='viewer-home'>
+                <AppBar position="static" style={{ marginBottom: 25 }}>
+                    <Toolbar>
+                        <IconButton
+                            size="large"
+                            edge="start"
+                            color="inherit"
+                            aria-label="menu"
+                            sx={{ mr: 2 }}
+                            onClick={this.handleDrawerOpen}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                            Vina Tech
+                        </Typography>
+                        <Button color="inherit" onClick={this.handleClickOpen}>Update</Button>
+                    </Toolbar>
+                </AppBar>
+
+                {/* Drawer */}
                 <Drawer
-                    variant="permanent"
                     anchor="left"
-                    sx={{
-                        width: 240,
-                        flexShrink: 0,
-                        '& .MuiDrawer-paper': {
-                            width: 240,
-                            boxSizing: 'border-box',
-                        },
-                    }}
+                    open={drawerOpen}
+                    onClose={this.handleDrawerClose}
                 >
-                    <Toolbar />
-                    <div>
-                        <List>
-                            {/* Thông tin của người dùng */}
-                            <ListItem style={{ paddingTop: 20, borderRadius: 8 }} >
-                                <img src="link-to-user-image" alt="User" style={{ width: 50, height: 50, borderRadius: '50%' }} />
-                                <ListItemText primary="Tên Người Dùng" secondary="Chức Vụ" />
-                            </ListItem>
+                    <List>
+                        {/* Thông tin của người dùng */}
+                        <ListItem style={{  paddingTop: 20, borderRadius: 8 }} >
+                            <img src="link-to-user-image" alt="User" style={{ width: 50, height: 50, borderRadius: '50%' }} />
+                            <ListItemText primary="Tên Người Dùng" secondary="Chức Vụ" />
+                        </ListItem>
 
-                            {/* Mục Dự án */}
-                            {/* <FormControl sx={{ m: 2, minWidth: 200 }} size="small">
-                                <InputLabel>Collections</InputLabel>
-                                <Select
-                                    value={selectedCollection}
-                                    label="Collections"
-                                    onChange={this.handleCollectionChange}
-                                >
-                                    <MenuItem value="">Select a collection</MenuItem>
+                        {/* Mục Dự án */}
+                        <ListItem button onClick={this.handleProjectClick} style={{ paddingTop: 20, borderRadius: 8 }} >
+                            <ListItemIcon><WorkIcon /></ListItemIcon>
+                            <ListItemText primary="Dự án" />
+                            {openProject ? <ExpandLess /> : <ExpandMore />}
+                        </ListItem>
+                        <Collapse in={openProject} timeout="auto" unmountOnExit>
+                            {/* Danh sách các dự án con */}
+                            <div style={{ paddingLeft: 50 }}>
+                                <List component="ul">
                                     {collections.map(collection => (
-                                        <MenuItem key={collection} value={collection}>{collection}</MenuItem>
+                                        <ListItem 
+                                            button 
+                                            key={collection} 
+                                            style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === collection ? '#3177a7' : 'inherit',color: selectedItem === collection ? '#fff' : 'inherit' }} 
+                                            onClick={() => this.handleListItemClick(collection)}
+                                        >
+                                            <ListItemText primary={collection} />
+                                        </ListItem>
                                     ))}
-                                </Select>
-                            </FormControl> */}
+                                </List>
+                            </div>
+                        </Collapse>
 
 
+                        {/* Các mục khác */}
+                        <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'manageAccounts' ? '#3177a7' : 'inherit',color: selectedItem === 'manageAccounts' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('manageAccounts')}>
+                            <ListItemIcon><ManageAccountsIcon /></ListItemIcon>
+                            <ListItemText primary="Quản lý" />
+                        </ListItem>
+                        <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'message' ? '#3177a7' : 'inherit',color: selectedItem === 'message' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('message')}>
+                            <ListItemIcon><MessageIcon /></ListItemIcon>
+                            <ListItemText primary="Tin nhắn" />
+                        </ListItem>
+                        <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'map' ? '#3177a7' : 'inherit',color: selectedItem === 'map' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('map')}>
+                            <ListItemIcon><MapIcon /></ListItemIcon>
+                            <ListItemText primary="Map" />
+                        </ListItem>
+                        <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'archive' ? '#3177a7' : 'inherit',color: selectedItem === 'archive' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('archive')}>
+                            <ListItemIcon><ArchiveIcon /></ListItemIcon>
+                            <ListItemText primary="Lưu trữ" />
+                        </ListItem>
+                        <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'calendar' ? '#3177a7' : 'inherit',color: selectedItem === 'calendar' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('calendar')}>
+                            <ListItemIcon><CalendarTodayIcon /></ListItemIcon>
+                            <ListItemText primary="Lịch" />
+                        </ListItem>
 
-
-                            {/* Các mục khác */}
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'manageAccounts' ? '#3177a7' : 'inherit', color: selectedItem === 'manageAccounts' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('manageAccounts')}>
-                                <ListItemIcon><ManageAccountsIcon /></ListItemIcon>
-                                <ListItemText primary="Quản lý" />
-                            </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'message' ? '#3177a7' : 'inherit', color: selectedItem === 'message' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('message')}>
-                                <ListItemIcon><MessageIcon /></ListItemIcon>
-                                <ListItemText primary="Tin nhắn" />
-                            </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'map' ? '#3177a7' : 'inherit', color: selectedItem === 'map' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('map')}>
-                                <ListItemIcon><MapIcon /></ListItemIcon>
-                                <ListItemText primary="Map" />
-                            </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'archive' ? '#3177a7' : 'inherit', color: selectedItem === 'archive' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('archive')}>
-                                <ListItemIcon><ArchiveIcon /></ListItemIcon>
-                                <ListItemText primary="Lưu trữ" />
-                            </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'calendar' ? '#3177a7' : 'inherit', color: selectedItem === 'calendar' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('calendar')}>
-                                <ListItemIcon><CalendarTodayIcon /></ListItemIcon>
-                                <ListItemText primary="Lịch" />
-                            </ListItem>
-
-                        </List>
-                    </div>
+                    </List>
                 </Drawer>
-                <div style={{ flexGrow: 1, padding: '0 24px' }}>
-                    <AppBar position="static" style={{ marginBottom: 25 }}>
-                        <Toolbar>
-                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                Vina Tech
-                            </Typography>
-                            <Button color="inherit" onClick={this.handleClickOpen}>Update</Button>
-                        </Toolbar>
-                    </AppBar>
 
-                    {/* Toggle button for carousel */}
-                    <Button className='buttonHideorShow' onClick={this.toggleCarouselVisibility}>
-                        {showCarousel ? 'Hide Carousel' : 'Show Carousel'}
-                    </Button>
 
-                    {/* Conditional rendering of the carousel */}
-                    {showCarousel && (
+
+
+                {/* Toggle button for carousel */}
+                <Button className='buttonHideorShow' onClick={this.toggleCarouselVisibility}>
+                    {showCarousel ? 'Hide Carousel' : 'Show Carousel'}
+                </Button>
+
+                {/* Conditional rendering of the carousel */}
+                {showCarousel && (
                         <div className="carousel-container">
                             <Carousel
                                 responsive={responsive}
@@ -319,19 +327,21 @@ class Home extends Component {
                         </div>
                     )}
 
-                    {selectedDocumentUrn && (
-                        <>
-                            {
-                                (() => {
-                                    const documentId = `urn:${selectedDocumentUrn}`;
-                                    launchViewer('viewerDiv', documentId);
-                                })()
-                            }
-                            <div style={{ position: "relative", width: "100%", height: showCarousel ? "140%" : "600%" }} id="viewerDiv" />
-                        </>
-                    )}
+                
+                {selectedDocumentUrn && (
+                    <>
+                        {
+                            (() => {
+                                const documentId = `urn:${selectedDocumentUrn}`;
+                                launchViewer('viewerDiv', documentId);
+                            })()
+                        }
+                        <div style={{ position: "absolute", width: "100%", height: showCarousel ? "58%" : "84%" }} id="viewerDiv" />
+                    </>
+                )}
 
-                    {/* Dialog */}
+                {/* Dialog */}
+                                    {/* Dialog */}
                     <Dialog
                         open={open}
                         onClose={this.handleClose}
@@ -367,7 +377,7 @@ class Home extends Component {
                             <Button onClick={() => getSelection(doorFinish)}>Save</Button>
                         </DialogActions>
                     </Dialog>
-                </div>
+
             </div>
         );
     }
