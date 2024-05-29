@@ -30,26 +30,23 @@ class Home extends Component {
             selectedCarouselIndex: 0, // Track the index of the selected item in the carousel
             showCarousel: true, // State to control the visibility of the carousel
             openProject: false, // State to control the visibility of project list
+            selectedDocument: null,
             selectedItem: null,
-            
+
 
         };
     }
 
     componentDidMount() {
         this.fetchCollections();
-    }
-
-    fetchCollections = () => {
         fetch('http://localhost:8080/zz')
             .then(response => response.json())
             .then(data => {
                 if (data.collections) {
                     const collections = data.collections;
                     this.setState({ collections }, () => {
-                        collections.forEach(collection => {
-                            this.fetchFirstDocumentDetails(collection);
-                        });
+                        this.fetchDocumentsInCollection(collections[0]);
+
                     });
                 } else {
                     console.error('Error: collections data not found in response:', data);
@@ -57,13 +54,29 @@ class Home extends Component {
             })
             .catch(error => console.error('Error fetching collections:', error));
     }
-
+    fetchCollections = () => {
+        fetch('http://localhost:8080/zz')
+            .then(response => response.json())
+            .then(data => {
+                if (data.collections) {
+                    const collections = data.collections;
+                    this.setState({ collections }, () => {
+                        if (collections.length > 0) {
+                            this.fetchFirstDocumentDetails(collections[0]);
+                        }
+                    });
+                } else {
+                    console.error('Error: collections data not found in response:', data);
+                }
+            })
+            .catch(error => console.error('Error fetching collections:', error));
+    }
     fetchFirstDocumentDetails = (collectionName) => {
         fetch(`http://localhost:8080/collections/${collectionName}`)
             .then(response => response.json())
             .then(data => {
                 if (data && data.length > 0) {
-                    const firstDocument = data[1];
+                    const firstDocument = data[0];
                     if (firstDocument.linkanh && firstDocument.urn) {
                         this.setState(prevState => ({
                             collectionDetails: {
@@ -73,12 +86,23 @@ class Home extends Component {
                                     urn: firstDocument.urn,
                                     location: firstDocument.location // Add location field if it exists
                                 }
-                            }
-                        }));
+                            },
+                            selectedDocument: firstDocument
+                        }), () => {
+                            const documentId = `urn:${firstDocument.urn}`;
+                            launchViewer('viewerDiv', documentId);
+                        });
                     }
                 }
             })
             .catch(error => console.error(`Error fetching first document of ${collectionName}:`, error));
+    }
+
+    fetchDocumentDetails = (document) => {
+        this.setState({ selectedDocument: document }, () => {
+            const documentId = `urn:${document.urn}`;
+            launchViewer('viewerDiv', documentId);
+        });
     }
 
     handleClose = () => {
@@ -97,6 +121,7 @@ class Home extends Component {
         const collectionName = event.target.value;
         this.setState({ selectedCollection: collectionName });
         this.fetchDocumentsInCollection(collectionName);
+        this.fetchFirstDocumentDetails(collectionName);
     }
 
     fetchDocumentsInCollection = (collectionName) => {
@@ -119,7 +144,9 @@ class Home extends Component {
     }
 
     handleCarouselItemClick = (index) => {
+        const document = this.state.documents[index];
         this.setState({ selectedCarouselIndex: index });
+        this.fetchDocumentDetails(document);
     }
 
     toggleCarouselVisibility = () => {
@@ -141,19 +168,21 @@ class Home extends Component {
             openProject: !prevState.openProject
         }));
     }
-    
-    handleListItemClick = (item) => {
-        this.setState((prevState) => ({
-            selectedItem: prevState.selectedItem === item ? null : item
-        }));
+
+    handleListItemClick = (item, index) => {
+        this.setState({
+            selectedItem: item,
+            selectedItemIndex: index
+        });
     }
-    
+
 
     render() {
-        const { open, doorFinish, collections, selectedCollection, documents, collectionDetails, selectedCarouselIndex, showCarousel, drawerOpen, openProject,selectedItem  } = this.state; // Thêm openProject vào đây
+
+        const { open, doorFinish, collections, selectedCollection, documents, collectionDetails, selectedCarouselIndex, showCarousel, drawerOpen, openProject, selectedItem, selectedDocument } = this.state; // Thêm openProject vào đây
 
         const selectedCollectionName = collections[selectedCarouselIndex];
-        const selectedCollectionUrn = collectionDetails[selectedCollectionName]?.urn;
+        const selectedDocumentUrn = selectedDocument?.urn;
 
         const responsive = {
             superLargeDesktop: {
@@ -190,58 +219,49 @@ class Home extends Component {
                 >
                     <Toolbar />
                     <div>
-                    <List>
+                        <List>
                             {/* Thông tin của người dùng */}
-                            <ListItem style={{  paddingTop: 20, borderRadius: 8 }} >
+                            <ListItem style={{ paddingTop: 20, borderRadius: 8 }} >
                                 <img src="link-to-user-image" alt="User" style={{ width: 50, height: 50, borderRadius: '50%' }} />
                                 <ListItemText primary="Tên Người Dùng" secondary="Chức Vụ" />
                             </ListItem>
 
                             {/* Mục Dự án */}
-                            <ListItem button onClick={this.handleProjectClick} style={{ paddingTop: 20, borderRadius: 8 }} >
-                                <ListItemIcon><WorkIcon /></ListItemIcon>
-                                <ListItemText primary="Dự án" />
-                                {openProject ? <ExpandLess /> : <ExpandMore />}
-                            </ListItem>
-                            <Collapse in={openProject} timeout="auto" unmountOnExit>
-                                {/* Danh sách các dự án con */}
-                                <div style={{ paddingLeft: 50 }}>
-                                    <List component="ul">
-                                        {collections.map(collection => (
-                                            <ListItem 
-                                                button 
-                                                key={collection} 
-                                                style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === collection ? '#3177a7' : 'inherit',color: selectedItem === collection ? '#fff' : 'inherit' }} 
-                                                onClick={() => this.handleListItemClick(collection)}
-                                            >
-                                                <ListItemText primary={collection} />
-                                            </ListItem>
-                                        ))}
-                                    </List>
-                                </div>
-                            </Collapse>
- 
+                            {/* <FormControl sx={{ m: 2, minWidth: 200 }} size="small">
+                                <InputLabel>Collections</InputLabel>
+                                <Select
+                                    value={selectedCollection}
+                                    label="Collections"
+                                    onChange={this.handleCollectionChange}
+                                >
+                                    <MenuItem value="">Select a collection</MenuItem>
+                                    {collections.map(collection => (
+                                        <MenuItem key={collection} value={collection}>{collection}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl> */}
+
 
 
 
                             {/* Các mục khác */}
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'manageAccounts' ? '#3177a7' : 'inherit',color: selectedItem === 'manageAccounts' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('manageAccounts')}>
+                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'manageAccounts' ? '#3177a7' : 'inherit', color: selectedItem === 'manageAccounts' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('manageAccounts')}>
                                 <ListItemIcon><ManageAccountsIcon /></ListItemIcon>
                                 <ListItemText primary="Quản lý" />
                             </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'message' ? '#3177a7' : 'inherit',color: selectedItem === 'message' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('message')}>
+                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'message' ? '#3177a7' : 'inherit', color: selectedItem === 'message' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('message')}>
                                 <ListItemIcon><MessageIcon /></ListItemIcon>
                                 <ListItemText primary="Tin nhắn" />
                             </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'map' ? '#3177a7' : 'inherit',color: selectedItem === 'map' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('map')}>
+                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'map' ? '#3177a7' : 'inherit', color: selectedItem === 'map' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('map')}>
                                 <ListItemIcon><MapIcon /></ListItemIcon>
                                 <ListItemText primary="Map" />
                             </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'archive' ? '#3177a7' : 'inherit',color: selectedItem === 'archive' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('archive')}>
+                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'archive' ? '#3177a7' : 'inherit', color: selectedItem === 'archive' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('archive')}>
                                 <ListItemIcon><ArchiveIcon /></ListItemIcon>
                                 <ListItemText primary="Lưu trữ" />
                             </ListItem>
-                            <ListItem button style={{ paddingTop: 20, borderRadius: 8,backgroundColor: selectedItem === 'calendar' ? '#3177a7' : 'inherit',color: selectedItem === 'calendar' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('calendar')}>
+                            <ListItem button style={{ paddingTop: 20, borderRadius: 8, backgroundColor: selectedItem === 'calendar' ? '#3177a7' : 'inherit', color: selectedItem === 'calendar' ? '#fff' : 'inherit' }} onClick={() => this.handleListItemClick('calendar')}>
                                 <ListItemIcon><CalendarTodayIcon /></ListItemIcon>
                                 <ListItemText primary="Lịch" />
                             </ListItem>
@@ -267,29 +287,30 @@ class Home extends Component {
                     {/* Conditional rendering of the carousel */}
                     {showCarousel && (
                         <div className="carousel-container">
-                            <Carousel 
-                                responsive={responsive} 
-                                showArrows={true} 
-                                autoPlay={false} 
-                                infiniteLoop={true} 
-                                showThumbs={false} 
+                            <Carousel
+                                responsive={responsive}
+                                showArrows={true}
+                                autoPlay={false}
+                                infiniteLoop={true}
+                                showThumbs={false}
                                 afterChange={this.handleCarouselChange}
                             >
-                                {collections.map((collection, index) => (
-                                    <div 
-                                        key={index} 
-                                        className={`carousel-item ${selectedCarouselIndex === index ? 'selected' : ''}`} 
+                                {documents.map((document, index) => (
+                                    <div
+                                        key={index}
+                                        className={`carousel-item ${selectedCarouselIndex === index ? 'selected' : ''}`}
                                         onClick={() => this.handleCarouselItemClick(index)}
                                     >
                                         <div className="card">
-                                            <img 
-                                                src={collectionDetails[collection]?.linkanh || "https://via.placeholder.com/150"} 
-                                                className="card-img-top" 
-                                                alt={`Model ${index + 1}`} 
+
+                                            <img
+                                                src={document.linkanh || "https://via.placeholder.com/150"}
+                                                className="card-img-top"
+                                                alt={`Model ${index + 1}`}
                                             />
                                             <div className="card-body">
-                                                <h5 className="card-title">MODEL {index + 1}</h5>
-                                                <p className="card-text">{collectionDetails[collection]?.location || 'Location not available'}</p>
+                                                <h5 className="card-title">{document.name}</h5>
+                                                <p className="card-text">{document.location || 'Location not available'}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -297,12 +318,12 @@ class Home extends Component {
                             </Carousel>
                         </div>
                     )}
-                    
-                    {selectedCollectionUrn && (
+
+                    {selectedDocumentUrn && (
                         <>
                             {
                                 (() => {
-                                    const documentId = `urn:${selectedCollectionUrn}`;
+                                    const documentId = `urn:${selectedDocumentUrn}`;
                                     launchViewer('viewerDiv', documentId);
                                 })()
                             }
@@ -321,7 +342,7 @@ class Home extends Component {
                                 Please select door finish value.
                             </DialogContentText>
                             <FormControl sx={{ m: 2, minWidth: 200 }} size="small">
-                            <InputLabel>Collections</InputLabel>
+                                <InputLabel>Collections</InputLabel>
                                 <Select
                                     value={selectedCollection}
                                     label="Collections"
